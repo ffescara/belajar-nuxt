@@ -1,15 +1,37 @@
 <script setup lang="ts">
 import { useCartStore } from '~/stores/cart';
 import { useRouter } from '#app';
+import { useFetch } from '#app';
 
 const cartStore = useCartStore();
 const router = useRouter();
 
-const completeCheckout = () => {
-  // Lakukan logika penyelesaian transaksi (misalnya kirim data ke backend)
-  cartStore.clearCart(); // Kosongkan keranjang setelah checkout
-  alert('Transaksi berhasil!');
-  router.push('/'); // Redirect ke halaman utama
+const completeCheckout = async () => {
+  if (cartStore.cartItems.length === 0) {
+    alert('Keranjang kosong!');
+    return;
+  }
+
+  const transactionData = {
+    items: cartStore.cartItems,
+    total: cartStore.totalPrice,
+  };
+
+  try {
+    const response = await $fetch('/api/transactions', {
+      method: 'POST',
+      body: transactionData,
+    });
+
+    if (response.success) {
+      cartStore.clearCart(); // Kosongkan keranjang
+      alert('Transaksi berhasil!');
+      router.push('/');
+    }
+  } catch (error) {
+    console.error('Terjadi kesalahan:', error);
+    alert('Gagal menyelesaikan transaksi!');
+  }
 };
 </script>
 
